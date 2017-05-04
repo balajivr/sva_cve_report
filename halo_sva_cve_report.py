@@ -81,9 +81,9 @@ def get_scan_data(session):
         script_options_info = yaml.load(config_settings)
         groups_setting = script_options_info['defaults']['include_groups']
     if groups_setting:
-        ofile.write('AWS Account Number,Halo Group,AWS Instance ID,Package Name,Package Version,CVE,CVE Rating,CVE Information\n')
+        ofile.write('AWS Account Number,Halo Group,AWS Instance ID,OS Platform,Package Name,Package Version,CVE,CVE Rating,CVE Information\n')
     else:
-        ofile.write('AWS Account Number,AWS Instance ID,Package Name,Package Version,CVE,CVE Rating,CVE Information\n')
+        ofile.write('AWS Account Number,AWS Instance ID,OS Platform,Package Name,Package Version,CVE,CVE Rating,CVE Information\n')
     server_count = 1
 
     total_servers = len(halo_server_list)
@@ -121,9 +121,9 @@ def get_scan_data(session):
                                         #print cve['cve_entry']
                                     cve_link="https://cve.mitre.org/cgi-bin/cvename.cgi?name=" + cve['cve_entry']
                                     if groups_setting:
-                                        row="'{0}',{1},{2},{3},{4},{5},{6},{7}\n".format(server['aws_account_id'],server['group_name'],server['aws_instance_id'],finding['package_name'],finding['package_version'],cve['cve_entry'],cve_rating,cve_link)
+                                        row="'{0}',{1},{2},{3},{4},{5},{6},{7},{8}\n".format(server['aws_account_id'],server['group_name'],server['aws_instance_id'],server['platform'],finding['package_name'],finding['package_version'],cve['cve_entry'],cve_rating,cve_link)
                                     else:
-                                        row="'{0}',{1},{2},{3},{4},{5},{6}\n".format(server['aws_account_id'],server['aws_instance_id'],finding['package_name'],finding['package_version'],cve['cve_entry'],cve_rating,cve_link)
+                                        row="'{0}',{1},{2},{3},{4},{5},{6},{7}\n".format(server['aws_account_id'],server['aws_instance_id'],server['platform'],finding['package_name'],finding['package_version'],cve['cve_entry'],cve_rating,cve_link)
                                     ofile.write(row)
                             if args.highcves:
                                 for cve in finding_cves:
@@ -131,9 +131,9 @@ def get_scan_data(session):
                                         cve_rating = 'High'
                                         cve_link="https://cve.mitre.org/cgi-bin/cvename.cgi?name=" + cve['cve_entry']
                                         if groups_setting:
-                                            row="'{0}',{1},{2},{3},{4},{5},{6},{7}\n".format(server['aws_account_id'],server['group_name'],server['aws_instance_id'],finding['package_name'],finding['package_version'],cve['cve_entry'],cve_rating,cve_link)
+                                            row="'{0}',{1},{2},{3},{4},{5},{6},{7}\n".format(server['aws_account_id'],server['group_name'],server['aws_instance_id'],server['platform'],finding['package_name'],finding['package_version'],cve['cve_entry'],cve_rating,cve_link)
                                         else:
-                                            row="'{0}',{1},{2},{3},{4},{5},{6}\n".format(server['aws_account_id'],server['aws_instance_id'],finding['package_name'],finding['package_version'],cve['cve_entry'],cve_rating,cve_link)
+                                            row="'{0}',{1},{2},{3},{4},{5},{6}\n".format(server['aws_account_id'],server['aws_instance_id'],server['platform'],finding['package_name'],finding['package_version'],cve['cve_entry'],cve_rating,cve_link)
                                         ofile.write(row)
                 retry_loop_counter = 6
             elif status_code == "401":
@@ -154,10 +154,12 @@ def get_halo_servers_id(session):
     get_halo_servers_list = cloudpassage.HttpHelper(session)
     reply=get_halo_servers_list.get_paginated("/v1/servers?state=active","servers",15)
     halo_server_id_list=[]
+    serverOSversion = ""
     for server in reply:
+        serverOSversion = str(server['platform']) + " " + str(server['platform_version'])
         if 'aws_ec2' in server:
             ec2_data = server['aws_ec2']
-            halo_server_id_list.append({'halo_server_id':server['id'], 'aws_instance_id':ec2_data['ec2_instance_id'], 'aws_account_id': ec2_data['ec2_account_id'], 'group_name': server['group_name']})
+            halo_server_id_list.append({'halo_server_id':server['id'], 'aws_instance_id':ec2_data['ec2_instance_id'], 'aws_account_id': ec2_data['ec2_account_id'], 'group_name': server['group_name'],'platform': serverOSversion})
         elif server['server_label'] and "_" in server['server_label']:
             server_label = server['server_label']
             server_label_parts = server_label.split("_")
@@ -165,7 +167,7 @@ def get_halo_servers_id(session):
             #old_agent_count += 1
             server_label_account = server_label_parts[0]
             server_label_isntance = server_label_parts[1]
-            halo_server_id_list.append({'halo_server_id':server['id'], 'aws_instance_id':server_label_isntance, 'aws_account_id': server_label_account, 'group_name': server['group_name']})
+            halo_server_id_list.append({'halo_server_id':server['id'], 'aws_instance_id':server_label_isntance, 'aws_account_id': server_label_account, 'group_name': server['group_name'], 'platform': serverOSversion})
     halo_instance_id_list = byteify(halo_server_id_list)
     print "Halo Server ID and AWS Account ID Lookup Complete " + time.strftime("%Y%m%d-%H%M%S")
     return halo_instance_id_list
