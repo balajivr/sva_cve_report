@@ -37,7 +37,9 @@ usage: halo_sva_report_custom.py [-h] [--allcves] [--highcves]
 
 optional arguments:
   -h, --help  show this help message and exit
+  
   --allcves   Use this to generate a report containing all Halo detected CVEs
+  
   --highcves  Use this to generate a report containing only high rated CVE's
               (>=7.0 CVSS score) Halo detected CVEs
 
