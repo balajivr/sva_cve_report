@@ -1,8 +1,9 @@
 # WARNING: This script takes a long time to execute if you have a high count
 #          of active servers.
 # Author: Sean Nicholson
-# Version 1.0.0
-# Date 05.04.2017
+# Version 1.0.1
+# Date 05.25.2017
+# v 1.0.1 - reduced per page calls to the servers endpoint to 100 from 1000
 ##############################################################################
 
 # Import Python Modules
@@ -152,7 +153,7 @@ def get_scan_data(session):
 def get_halo_servers_id(session):
     old_agent_count = 0
     get_halo_servers_list = cloudpassage.HttpHelper(session)
-    reply=get_halo_servers_list.get_paginated("/v1/servers?state=active","servers",15)
+    reply=get_halo_servers_list.get_paginated("/v1/servers?per_page=100&state=active","servers",30)
     halo_server_id_list=[]
     serverOSversion = ""
     for server in reply:
